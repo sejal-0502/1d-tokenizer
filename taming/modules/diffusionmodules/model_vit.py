@@ -152,8 +152,10 @@ class EncoderVIT(nn.Module):
         
         image_height, image_width = image_size if isinstance(image_size, tuple) \
                                     else (image_size, image_size) 
+        # print("Image Height : ", image_height)
         patch_height, patch_width = patch_size if isinstance(patch_size, tuple) \
-                                    else (patch_size, patch_size) 
+                                    else (patch_size, patch_size)
+        # print("Patch Height : ", patch_height) 
         self.image_height = image_height
         self.image_width = image_width
         self.patch_height = patch_height 
@@ -162,18 +164,21 @@ class EncoderVIT(nn.Module):
         self.token_size = token_size
         self.model_width = model_width
         self.grid_size = image_height // patch_height
+        # print("Grid Size : ", self.grid_size)
         dim = self.model_width
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
         en_pos_embedding = get_2d_sincos_pos_embed(dim, (image_height // patch_height, image_width // patch_width))
 
         self.num_patches = (image_height // patch_height) * (image_width // patch_width) 
+        # print("Num of patches : ", self.num_patches)
         self.patch_dim = channels * patch_height * patch_width 
 
         self.to_patch_embedding = nn.Sequential(
             nn.Conv2d(channels, dim, kernel_size=patch_size, stride=patch_size), 
             Rearrange('b c h w -> b (h w) c'), 
         )
+        # print("Patch Embedding : ", self.to_patch_embedding)
 
         # self.en_pos_embedding = nn.Parameter(torch.from_numpy(en_pos_embedding).float().unsqueeze(0), requires_grad=False)
         self.en_pos_embedding = nn.Parameter(torch.from_numpy(en_pos_embedding).float().unsqueeze(0), requires_grad=True)
@@ -202,10 +207,13 @@ class EncoderVIT(nn.Module):
 
     """Additonal changes for titok - for additing learnable latent tokens and outputting them"""
     def forward(self, img: torch.FloatTensor) -> torch.FloatTensor:
+        # print("Image shape : ", img.shape)
         batch_size = img.shape[0] # 4
         ft_h, ft_w = img.shape[-2]//self.patch_height, img.shape[-1]//self.patch_width # 16, 16
         x = self.to_patch_embedding(img) 
+        # print("Patch embeddings shape encoder : ", x.shape)
         x = x + self.resize_pos_embedding((ft_h, ft_w)) 
+        # print("X shape : ", x.shape)
 
         # print("X shape after pos embedding : ", x.shape) # [4, 256, 512]
 

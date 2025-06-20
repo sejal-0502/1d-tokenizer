@@ -4,7 +4,7 @@ model:
   params:
     monitor: 'val/rec_loss'
     grad_acc_steps: 16
-    pretrained_model_name : 'MAE'
+    pretrained_model_name : 'DINO_TITOK'
     encoder_config:
       target: taming.modules.diffusionmodules.model_vit.EncoderVIT
       params:
@@ -15,7 +15,7 @@ model:
         depth : 12
         heads : 12
         token_size: 16
-        num_latent_tokens: 16
+        num_latent_tokens: 64
         mlp_dim : 3072
         pretrained : True
         normalize_embedding: True
@@ -25,9 +25,10 @@ model:
         double_z: False
         z_channels: 768
         resolution: 256
+        patch_size: 16
         model_width: 768
         token_size: 16
-        num_latent_tokens: 16
+        num_latent_tokens: 64
         in_channels: 3
         out_ch: 3
         ch: 128

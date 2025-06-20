@@ -741,7 +741,7 @@ def _expand_token(token, batch_size: int):
 class Decoder(nn.Module):
     def __init__(self, *, ch, out_ch, ch_mult=(1,2,4,8), num_res_blocks,
                  attn_resolutions, dropout=0.0, resamp_with_conv=True, in_channels,
-                 resolution, give_pre_end=False, model_width: int, num_latent_tokens: int, z_channels, token_size, **ignorekwargs):
+                 resolution, patch_size, give_pre_end=False, model_width: int, num_latent_tokens: int, z_channels, token_size, **ignorekwargs):
         super().__init__()
         self.ch = ch
         self.temb_ch = 0
@@ -752,7 +752,7 @@ class Decoder(nn.Module):
         self.give_pre_end = give_pre_end
         self.model_width = model_width
         self.num_latent_tokens = num_latent_tokens
-        self.grid_size = 16
+        self.grid_size = patch_size
         self.token_size = token_size
         self.z_channels = z_channels
         dim = self.model_width
