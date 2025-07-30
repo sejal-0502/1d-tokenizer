@@ -144,7 +144,6 @@ class Transformer(nn.Module):
 def _expand_token(token, batch_size: int):
     return token.unsqueeze(0).expand(batch_size, -1, -1)
 
-"""Encoder class used for Image reconstruction - Encoding"""
 class EncoderVIT(nn.Module):
     def __init__(self, image_size: Union[Tuple[int, int], int], patch_size: Union[Tuple[int, int], int],
     mlp_dim: int, depth, heads, model_width, num_latent_tokens, token_size, channels: int = 3, dim_head: int = 64, **ignore_kwargs) -> None:
@@ -152,10 +151,8 @@ class EncoderVIT(nn.Module):
         
         image_height, image_width = image_size if isinstance(image_size, tuple) \
                                     else (image_size, image_size) 
-        # print("Image Height : ", image_height)
         patch_height, patch_width = patch_size if isinstance(patch_size, tuple) \
                                     else (patch_size, patch_size)
-        # print("Patch Height : ", patch_height) 
         self.image_height = image_height
         self.image_width = image_width
         self.patch_height = patch_height 
@@ -164,36 +161,28 @@ class EncoderVIT(nn.Module):
         self.token_size = token_size
         self.model_width = model_width
         self.grid_size = image_height // patch_height
-        # print("Grid Size : ", self.grid_size)
         dim = self.model_width
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
         en_pos_embedding = get_2d_sincos_pos_embed(dim, (image_height // patch_height, image_width // patch_width))
 
         self.num_patches = (image_height // patch_height) * (image_width // patch_width) 
-        # print("Num of patches : ", self.num_patches)
         self.patch_dim = channels * patch_height * patch_width 
 
         self.to_patch_embedding = nn.Sequential(
             nn.Conv2d(channels, dim, kernel_size=patch_size, stride=patch_size), 
             Rearrange('b c h w -> b (h w) c'), 
         )
-        # print("Patch Embedding : ", self.to_patch_embedding)
-
-        # self.en_pos_embedding = nn.Parameter(torch.from_numpy(en_pos_embedding).float().unsqueeze(0), requires_grad=False)
         self.en_pos_embedding = nn.Parameter(torch.from_numpy(en_pos_embedding).float().unsqueeze(0), requires_grad=True)
         self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim)
 
         self.apply(init_weights)
-
-        """Additional - for titok ---START---"""
         scale = dim ** -0.5
         self.class_embedding = nn.Parameter(scale * torch.randn(1, self.model_width))
         self.latent_tokens = nn.Parameter(scale * torch.randn(self.num_latent_tokens, self.model_width))
         self.latent_token_positional_embedding = nn.Parameter(
             scale * torch.randn(self.num_latent_tokens, self.model_width))        
         self.conv_out = nn.Conv2d(self.model_width, self.token_size, kernel_size=1, bias=True)
-        """---END---"""
 
     def resize_pos_embedding(self, new_shape):
         orig_posemb_h = self.image_height // self.patch_height
@@ -205,17 +194,11 @@ class EncoderVIT(nn.Module):
         posemb = torch.nn.functional.interpolate(posemb, new_shape, mode='bicubic')
         return rearrange(posemb, '1 d h w -> 1 (h w) d')
 
-    """Additonal changes for titok - for additing learnable latent tokens and outputting them"""
     def forward(self, img: torch.FloatTensor) -> torch.FloatTensor:
-        # print("Image shape : ", img.shape)
-        batch_size = img.shape[0] # 4
-        ft_h, ft_w = img.shape[-2]//self.patch_height, img.shape[-1]//self.patch_width # 16, 16
+        batch_size = img.shape[0] 
+        ft_h, ft_w = img.shape[-2]//self.patch_height, img.shape[-1]//self.patch_width 
         x = self.to_patch_embedding(img) 
-        # print("Patch embeddings shape encoder : ", x.shape)
         x = x + self.resize_pos_embedding((ft_h, ft_w)) 
-        # print("X shape : ", x.shape)
-
-        # print("X shape after pos embedding : ", x.shape) # [4, 256, 512]
 
         x = torch.cat([_expand_token(self.class_embedding, x.shape[0]).to(x.dtype), x], dim=1)
 
@@ -227,13 +210,10 @@ class EncoderVIT(nn.Module):
 
         latent_tokens = x[:, 1+self.grid_size**2:] 
 
-        latent_tokens = latent_tokens.reshape(batch_size, self.model_width, self.num_latent_tokens, 1) # 4, 512, 128, 1
-
-        # print("Latent tokens with model width : ", latent_tokens.shape)
+        latent_tokens = latent_tokens.reshape(batch_size, self.model_width, self.num_latent_tokens, 1) 
 
         latent_tokens = self.conv_out(latent_tokens)
         latent_tokens = latent_tokens.reshape(batch_size, self.token_size, 1, self.num_latent_tokens)
-        # print("Latent tokens with token size : ", latent_tokens.shape)
 
         return latent_tokens
 
@@ -252,8 +232,7 @@ class DecoderVIT(nn.Module):
         self.patch_height = patch_height
         self.patch_width = patch_width
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
-        #de_pos_embedding = get_2d_sincos_pos_embed(dim, (image_height // patch_height, image_width // patch_width))
-
+        
         self.num_patches = (image_height // patch_height) * (image_width // patch_width)
 
         self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim)
@@ -266,7 +245,6 @@ class DecoderVIT(nn.Module):
         self.MLP = nn.Sequential(
             nn.Linear(dim, dim),
             nn.Tanh(),
-            #nn.Linear(dim * 4, dim)
         )
 
         self.to_pixel = nn.Sequential(

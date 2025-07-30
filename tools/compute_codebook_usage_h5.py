@@ -286,17 +286,6 @@ def compute_rFID_score(model, path_original_images, path_recons_images):
     ])
 
     original_images = ImageFolderDataset(folder_path=path_original_images, transform=transform)
-    # get reconstructed images from the VQGAN model
-
-    # print(">> Generating Reconstructed Images...")
-    # for i in range(num_images):
-    #     quant, _, _ = model.encode(original_images[i].unsqueeze(0).cuda())
-    #     reconst_sample = model.decode(quant)
-    #     if isinstance(reconst_sample, tuple):
-    #         reconst_sample = reconst_sample[0]
-    #     if isinstance(reconst_sample, tuple):
-    #         reconst_sample = reconst_sample[0]
-    #     save_image(reconst_sample, os.path.join(path_recons_images, f"reconstructed_image_{i}.jpg"))
 
     reconstructed_images = ImageFolderDataset(folder_path=path_recons_images, transform=transform)
     reconstructed_images.image_filenames = original_images.image_filenames  # let's make sure they match...

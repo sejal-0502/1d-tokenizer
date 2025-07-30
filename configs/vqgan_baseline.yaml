@@ -77,11 +77,9 @@ data:
       target: taming.data.custom.CustomTrain
       params:
         training_images_list_file: /work/dlcsmall1/mittal-token-data/BDD100K/images/train_daytime_clear.txt
-        # training_images_list_file: /work/dlclarge2/mutakeks-storage_titok/data/train_half.txt
         size: 256
     validation:
       target: taming.data.custom.CustomTest
       params:
         test_images_list_file: /work/dlcsmall1/mittal-token-data/BDD100K/images/val_daytime_clear.txt
-        # test_images_list_file: /work/dlclarge2/mutakeks-storage_titok/data/val_half.txt
         size: 256

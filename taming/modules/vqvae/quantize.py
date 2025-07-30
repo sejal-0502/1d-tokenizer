@@ -42,18 +42,13 @@ class VectorQuantizer(nn.Module):
             1. get encoder input (B,C,H,W)
             2. flatten input to (B*H*W,C)
         """
-        # reshape z -> (batch, height, width, channel) and flatten
         z = z.permute(0, 2, 3, 1).contiguous()
         z_flattened = z.view(-1, self.e_dim)
-        # distances from z to embeddings e_j (z - e)^2 = z^2 + e^2 - 2 e * z
 
         d = torch.sum(z_flattened ** 2, dim=1, keepdim=True) + \
             torch.sum(self.embedding.weight**2, dim=1) - 2 * \
             torch.matmul(z_flattened, self.embedding.weight.t())
 
-        ## could possible replace this here
-        # #\start...
-        # find closest encodings
         min_encoding_indices = torch.argmin(d, dim=1).unsqueeze(1)
 
         min_encodings = torch.zeros(
@@ -62,13 +57,6 @@ class VectorQuantizer(nn.Module):
 
         # get quantized latent vectors
         z_q = torch.matmul(min_encodings, self.embedding.weight).view(z.shape)
-        #.........\end
-
-        # with:
-        # .........\start
-        #min_encoding_indices = torch.argmin(d, dim=1)
-        #z_q = self.embedding(min_encoding_indices)
-        # ......\end......... (TODO)
 
         # compute loss for embedding
         loss = torch.mean((z_q.detach()-z)**2) + self.beta * \
@@ -87,8 +75,6 @@ class VectorQuantizer(nn.Module):
         return z_q, loss, (perplexity, min_encodings, min_encoding_indices)
 
     def get_codebook_entry(self, indices, shape):
-        # shape specifying (batch, height, width, channel)
-        # TODO: check for more easy handling with nn.Embedding
         min_encodings = torch.zeros(indices.shape[0], self.n_e).to(indices)
         min_encodings.scatter_(1, indices[:,None], 1)
 
@@ -491,8 +477,7 @@ class EMAVectorQuantizer(nn.Module):
         # preserve gradients
         z_q = z + (z_q - z).detach()
 
-        # reshape back to match original input shape
-        #z_q, 'b h w c -> b c h w'
+ 
         z_q = rearrange(z_q, 'b h w c -> b c h w')
         return z_q, loss, (perplexity, encodings, encoding_indices)
 

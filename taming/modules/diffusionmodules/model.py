@@ -737,7 +737,6 @@ class Encoder(nn.Module):
 def _expand_token(token, batch_size: int):
     return token.unsqueeze(0).expand(batch_size, -1, -1)
 
-"""Decoder class used for Image reconstruction - Decoding"""
 class Decoder(nn.Module):
     def __init__(self, *, ch, out_ch, ch_mult=(1,2,4,8), num_res_blocks,
                  attn_resolutions, dropout=0.0, resamp_with_conv=True, in_channels,
@@ -807,7 +806,6 @@ class Decoder(nn.Module):
                 curr_res = curr_res * 2
             self.up.insert(0, up) 
 
-        """Additional - for titok ---START---"""
         self.norm_out = Normalize(block_in)
         self.conv_out = torch.nn.Conv2d(block_in,
                                         out_ch,
@@ -821,65 +819,39 @@ class Decoder(nn.Module):
         self.positional_embedding = nn.Parameter(scale * torch.randn(self.grid_size ** 2 + 1, self.model_width))
         self.class_embedding = nn.Parameter(scale * torch.randn(1, self.model_width))
         self.mask_token = nn.Parameter(scale * torch.randn(1, 1, self.model_width))
-        self.latent_token_positional_embedding = nn.Parameter(scale * torch.randn(self.num_latent_tokens, self.model_width))   
-        """---END---"""  
+        self.latent_token_positional_embedding = nn.Parameter(scale * torch.randn(self.num_latent_tokens, self.model_width))    
 
-    """Additonal changes for titok - for additing masked tokens"""
     def forward(self, z):
-        # print("Decoder I/p: ", z.shape)
-        N, C, H, W = z.shape # [4, 50, 1, 128]
+        N, C, H, W = z.shape 
 
         assert H == 1 and W == self.num_latent_tokens, f"{H}, {W}, {self.num_latent_tokens}"
-        z = z.reshape(N, C*H, W).permute(0, 2, 1)  # [4, 128, 50]
-        # print("Z1 : ",z.shape)
+        z = z.reshape(N, C*H, W).permute(0, 2, 1)  
         
-        z = self.decoder_embed(z) # [4, 128, 512]
+        z = self.decoder_embed(z) 
+        self.last_z_shape = z.shape 
 
-        # print("Z2 : ",z.shape)
-        
-        self.last_z_shape = z.shape # [4, 128, 512]
-
-        batchsize, seq_len, token_size = z.shape  # [4, 128, 512]
-        # print("Z shape before adding masked tokens: ", z.shape) # [4, 128, 512] 
-
+        batchsize, seq_len, token_size = z.shape   
         temb = None
 
-        mask_tokens = self.mask_token.repeat(batchsize, self.grid_size**2, 1).to(z.dtype) # (4, 256, 1)
+        mask_tokens = self.mask_token.repeat(batchsize, self.grid_size**2, 1).to(z.dtype) 
         mask_tokens = torch.cat([_expand_token(self.class_embedding, mask_tokens.shape[0]).to(mask_tokens.dtype),
                                     mask_tokens], dim=1)
         mask_tokens = mask_tokens + self.positional_embedding.to(mask_tokens.dtype)
         z = z + self.latent_token_positional_embedding[:seq_len]
-        # print("Positional embedding added: ", z.shape)
  
-        z = torch.cat([mask_tokens, z], dim=1) # [4, 385, 512], 385 = 128 + 256 + 1
-        z = z.permute(0, 2, 1) # [4, 512, 385]
-        z = z.unsqueeze(-1) # [4, 512, 385, 1]
-
-        # print("h before conv: ", z.shape)
-        # print("I think probelm start from here")
+        z = torch.cat([mask_tokens, z], dim=1) 
+        z = z.permute(0, 2, 1) 
+        z = z.unsqueeze(-1) 
         h = self.conv_in(z)
 
-        # print("Not here")
-        # print("h after conv : ", h.shape)
-        # h = z
-        # print("h before mid block: ", h.shape) # [4, 512, 385, 1]
-
         h = self.mid.block_1(h, temb)
-        # print("h after 1st block_1: ", h.shape)
         h = self.mid.attn_1(h)
         h = self.mid.block_2(h, temb)
-
-        # print("h after middle conv: ", h.shape) # [4, 512, 385, 1]
-        # batchsize, tokens, lent, _ = z.shape
         batchsize, tokens, lent, _ = h.shape
-        h = h.reshape(batchsize, tokens, lent*_).permute(0, 2, 1) # [4, 512, 385] --> [4, 385, 512]
-        h = h[:, 1:1+self.grid_size**2] # [4, 256, 385]
+        h = h.reshape(batchsize, tokens, lent*_).permute(0, 2, 1) 
+        h = h[:, 1:1+self.grid_size**2]
+        h = h.permute(0, 2, 1).reshape(batchsize, tokens, self.grid_size, self.grid_size)
 
-        # print("h after removing unnecessary content : ", h.shape)
-        h = h.permute(0, 2, 1).reshape(batchsize, tokens, self.grid_size, self.grid_size) # [4, 512, 256] --> [4, 512, 16, 16]
-        # h = h.permute(0, 2, 1).reshape(batchsize, self.model_width, self.grid_size, self.grid_size) # [4, 512, 256] --> [4, 512, 16, 16]
-
-        # upsampling
         for i_level in reversed(range(self.num_resolutions)): 
             for i_block in range(self.num_res_blocks+1):
                 h = self.up[i_level].block[i_block](h, temb) 
@@ -888,9 +860,6 @@ class Decoder(nn.Module):
             if i_level != 0:
                 h = self.up[i_level].upsample(h)
 
-        # print("h after upsampling : ", h.shape) # (4, 128, 256, 256)
-
-        # end
         if self.give_pre_end:
             return h
 
@@ -898,7 +867,6 @@ class Decoder(nn.Module):
         h = nonlinearity(h)
         h = self.conv_out(h)
 
-        # print("After decoding : ", h.shape) # (4, 3, 256, 256)
         return h
     
 class VUNet(nn.Module):

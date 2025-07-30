@@ -48,7 +48,7 @@ class VQModel2WithEntropyLossMAEinit(VQModel2WithEntropyLoss):
                  colorize_nlabels=None,
                  monitor=None,
                  entropy_loss_weight_scheduler_config=None,
-                 pretrained_encoder = 'MAE', #'VIT_DINOv2', 'MAE'
+                 pretrained_encoder = 'MAE', 
                  ):
         super().__init__(encoder_config, decoder_config, quantizer_config, loss_config, 
                         grad_acc_steps, ckpt_path, ignore_keys, image_key, colorize_nlabels, 

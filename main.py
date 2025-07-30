@@ -176,7 +176,7 @@ def get_parser(**parser_kwargs):
     parser.add_argument(
         "--logdir",
         type=str,
-        default="/work/dlclarge2/mutakeks-storage_titok/dino_64_new",  # default value
+        default="",
         help="Directory to save vqgan logs"
     )
 

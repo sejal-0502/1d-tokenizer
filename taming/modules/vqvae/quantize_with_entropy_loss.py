@@ -14,7 +14,6 @@ def log(t, eps = 1e-5):
 def entropy(prob):
     return (-prob * log(prob)).sum(dim=-1)
 
-"""Quantizer class - no chnages as it works the same as quantizer in titok"""
 class VectorQuantizer2WithEntropyLoss(VectorQuantizer2):
 
     def __init__(self, n_e, e_dim, beta, normalize_embedding, remap=None, unknown_index="random", sane_index_shape=False, legacy=True,

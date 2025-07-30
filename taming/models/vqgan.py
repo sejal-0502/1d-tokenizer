@@ -9,7 +9,6 @@ from taming.util import instantiate_from_config
 from taming.modules.diffusionmodules.model import Encoder, Decoder
 from taming.modules.diffusionmodules.model_vit import EncoderVIT 
 from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
-# from taming.modules.vqvae.quantize import VectorQuantizer
 from taming.modules.vqvae.quantize import GumbelQuantize
 from taming.modules.vqvae.quantize import EMAVectorQuantizer
 
@@ -166,15 +165,8 @@ class VQModel(pl.LightningModule):
         total_steps = self.trainer.max_epochs * self.num_iters_per_epoch
         def lr_lambda(step):
             if step < warmup_steps:
-                # Linear warmup
-                #print(f"Step: {step}, Warmup: {warmup_steps}, Warmup Start LR: {warmup_start_lr}, Max LR: {max_lr}")
                 return step/warmup_steps
-            # After warmup_steps, we just return 1. This could be modified to implement your own schedule
             else:
-                # progress = (step - warmup_steps) / (total_steps - warmup_steps)
-                # cosine_decay = 0.5 * (1 + math.cos(math.pi * progress))
-                # decayed = (1 - min_lr) * cosine_decay + min_lr
-                # return decayed
                 return 1.0        
         return LambdaLR(optimizer, lr_lambda)
 
@@ -237,7 +229,6 @@ class VQModel2(VQModel):
                  colorize_nlabels=None,
                  monitor=None,
                  ):
-        # we call the constructor of the grandparent class (we don't need to call the constructor of VQModel)
         super(VQModel, self).__init__()
         self.automatic_optimization = False
 
@@ -248,7 +239,6 @@ class VQModel2(VQModel):
         self.decoder = instantiate_from_config(decoder_config)
         self.quantize = instantiate_from_config(quantizer_config)
         self.loss = instantiate_from_config(loss_config)
-        # self.quant_conv = torch.nn.Conv2d(encoder_config.params["z_channels"], quantizer_config.params['e_dim'], 1)
         self.post_quant_conv = torch.nn.Conv2d(quantizer_config.params['e_dim'], decoder_config.params["z_channels"], 1)
         
         self.encoder_normalize_embedding = encoder_config.params.get("normalize_embedding", False)

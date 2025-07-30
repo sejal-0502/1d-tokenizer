@@ -40,7 +40,7 @@ class ResNet50Block4Features(models.ResNet):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        features = self.layer4(x) # 8x8x2048
+        features = self.layer4(x)
 
         x = self.avgpool(features)
         x = torch.flatten(x, 1)
@@ -79,7 +79,6 @@ class VQModel2WithEntropyDINOLoss(VQModel2WithEntropyLoss):
         self.grad_acc_steps = grad_acc_steps
         self.model_width = encoder_config.params['model_width']
         self.scale = self.model_width ** -0.5
-        # self.latent_tokens = nn.Parameter(self.scale * torch.randn(self.num_latent_tokens, self.encoder.model_width))
 
         self.encoder_normalize_embedding = encoder_config.params.get("normalize_embedding", False)
 
@@ -99,9 +98,7 @@ class VQModel2WithEntropyDINOLoss(VQModel2WithEntropyLoss):
 
     def forward(self, input):
         quant, diff, _ = self.encode(input)
-        # print("----------Quant: ------------", quant.shape)
         dec = self.decode(quant)
-        # print("----------Decoder: ------------", dec.shape)
         return dec, diff, _
 
     def dino_loss(self, dino_output, decoder_dino_output):
@@ -194,22 +191,19 @@ class VisionTransformerWithPretrainedWts(VisionTransformer):
         self.num_extra_tokens = num_extra_tokens
         if num_extra_tokens > 0:
             self.patch_embed.proj = nn.Conv2d(3, 768, kernel_size=patch_size, stride=patch_size)
-            # 1) create the extra tokens
             self.prompt_tokens = nn.Parameter(torch.zeros(1, num_extra_tokens, self.embed_dim))
-            # 2) replace the pos_embed with a larger one
             num_patches = (img_size // patch_size) ** 2
-            # print("Patch count : ", num_patches)
+
             new_len = 1 + num_extra_tokens + num_patches
             self.pos_embed = nn.Parameter(torch.zeros(1, new_len, self.embed_dim))
 
     def forward_features(self, x):
         B = x.size(0)
-        x = self.patch_embed.proj(x)                    # (B, N, D)
+        x = self.patch_embed.proj(x)                    
         x = x.flatten(2).transpose(1, 2)
-        cls_tokens = self.cls_token.expand(B, -1, -1)  # (B,1,D)
+        cls_tokens = self.cls_token.expand(B, -1, -1) 
         if self.num_extra_tokens > 0:
-            prompt_tokens = self.prompt_tokens.expand(B, -1, -1)  # (B,K,D)
-            # x = torch.cat((cls_tokens, prompt_tokens, x), dim=1)
+            prompt_tokens = self.prompt_tokens.expand(B, -1, -1)  
             x = torch.cat((cls_tokens, x, prompt_tokens), dim=1)
         else:
             x = torch.cat((cls_tokens, x), dim=1)
@@ -220,21 +214,6 @@ class VisionTransformerWithPretrainedWts(VisionTransformer):
         x = self.norm(x)
         return x
     
-# def resize_patch_embedding_weights(old_weight, new_size):
-#     """
-#     Resize patch embedding weights using bilinear interpolation.
-#     old_weight: [C_out, C_in, H_old, W_old]
-#     new_size: (H_new, W_new)
-#     """
-#     C_out, C_in, H_old, W_old = old_weight.shape
-#     H_new, W_new = new_size
-#     # Reshape to [C_out * C_in, 1, H, W] for interpolation
-#     old_weight_reshaped = old_weight.reshape(-1, 1, H_old, W_old)
-#     new_weight = F.interpolate(old_weight_reshaped, size=(H_new, W_new), mode='bilinear', align_corners=True)
-#     return new_weight.reshape(C_out, C_in, H_new, W_new)
-
-
-"""Used class - Changes in the class for removing the pretrained wts"""
 class VQModel2WithEntropyDINOLossMAEinit(VQModel2WithEntropyDINOLoss):
     def __init__(self, 
                  pretrained_model_name,
@@ -269,7 +248,6 @@ class VQModel2WithEntropyDINOLossMAEinit(VQModel2WithEntropyDINOLoss):
         self.token_size = encoder_config.params['token_size']
         self.latent_tokens = nn.Parameter(self.scale * torch.randn(self.num_latent_tokens, self.encoder.width)) 
         self.ln = nn.Linear(self.pretrained_wt, self.token_size)
-        # self.latent_tokens = nn.Parameter(self.scale * torch.randn(self.num_latent_tokens, self.encoder.width))
 
         if pretrained_model_name:
             if pretrained_model_name == 'MAE' :
@@ -287,25 +265,16 @@ class VQModel2WithEntropyDINOLossMAEinit(VQModel2WithEntropyDINOLoss):
             if pretrained_model_name != 'DEPTH_ANYTHING_V2':
                 pretrained_model = timm.create_model(pretrained_encoder_model, img_size=self.image_size, patch_size=self.patch_size, pretrained=True)
                 state_dict = pretrained_model.state_dict()
-                # print('State dict pos embeddings before : ', state_dict['pos_embed'].shape)
-
-                #Create your model instance (with any architectural tweaks already applied)
                 self.encoder = VisionTransformerWithPretrainedWts(patch_size=self.patch_size, img_size=self.image_size, num_extra_tokens=self.num_latent_tokens)
-                # print("Pos embedding of self.encoder : ", self.encoder.pos_embed.shape)
                 K = self.encoder.num_extra_tokens
-                # print("Shape of K : ", K)
+ 
                 state_dict['pos_embed'] = nn.Parameter(torch.zeros(1, 1+K+(state_dict['pos_embed'].shape[1]-1), 768))  # (1, 1+K+N, D)
-
 
                 if pretrained_model_name == 'CLIP':
                     state_dict.pop("head.weight", None)
                     state_dict.pop("head.bias", None)
-                # 3. Load weights, ignoring any missing or unexpected keys
-                # print("Implemented until here 1")
+                
                 missing, unexpected = self.encoder.load_state_dict(state_dict, strict=False)
-                # print("Implemented until here 2")
-                # for name, param in self.encoder.named_parameters():
-                #     print(f"{name}: {param.shape}")
 
                 print(f"Loaded with {len(missing)} missing keys and {len(unexpected)} unexpected keys")
                 print("Missing keys:")
@@ -321,43 +290,32 @@ class VQModel2WithEntropyDINOLossMAEinit(VQModel2WithEntropyDINOLoss):
 
                 new_state_dict = {}
                 for k, v in state_dict.items():
-                    new_key = k.replace("pretrained.", "")  # remove 'module.' if present
+                    new_key = k.replace("pretrained.", "")  
                     new_state_dict[new_key] = v
                 state_dict = new_state_dict
-
-                # print('State dict pos embeddings before : ', state_dict['pos_embed'].shape)
 
                 pos_embed = state_dict['pos_embed']
                 embedding_dim = pos_embed.shape[-1]
                 cls_token = pos_embed[:, :1, :]
                 patch_pos_embed = pos_embed[:, 1:, :]
 
-                old_size = int(patch_pos_embed.shape[1] ** 0.5)     # 37
+                old_size = int(patch_pos_embed.shape[1] ** 0.5)     
                 patch_pos_embed = patch_pos_embed.reshape(1, old_size, old_size, embedding_dim).permute(0, 3, 1, 2)
 
                 new_size = (self.image_size // self.patch_size)
                 interpolated = F.interpolate(patch_pos_embed, size=(new_size, new_size), mode='bicubic', align_corners=False)
-                # Reshape back to [1, 256, D]
+ 
                 new_patch_pos_embed = interpolated.permute(0, 2, 3, 1).reshape(1, new_size * new_size, embedding_dim)
 
-                # Concatenate cls token back
-                new_pos_embed = torch.cat((cls_token, new_patch_pos_embed), dim=1)  # [1, 1+256, D]
+                new_pos_embed = torch.cat((cls_token, new_patch_pos_embed), dim=1)  
 
-                # Replace in state_dict
                 state_dict['pos_embed'] = new_pos_embed
 
-                # print('State dict pos embeddings after 1 : ', state_dict['pos_embed'].shape)
-
-                #Create your model instance (with any architectural tweaks already applied)
                 self.encoder = VisionTransformerWithPretrainedWts(patch_size=self.patch_size, img_size=self.image_size, num_extra_tokens=self.num_latent_tokens)
                 K = self.encoder.num_extra_tokens
-                state_dict['pos_embed'] = nn.Parameter(torch.zeros(1, 1+K+(state_dict['pos_embed'].shape[1]-1), 768))  # (1, 1+K+N, D)
-                # print('State dict pos embeddings after 2 : ', state_dict['pos_embed'].shape)
-
-                # 3. Load weights, ignoring any missing or unexpected keys
+                state_dict['pos_embed'] = nn.Parameter(torch.zeros(1, 1+K+(state_dict['pos_embed'].shape[1]-1), 768))  
+                
                 missing, unexpected = self.encoder.load_state_dict(state_dict, strict=False)
-                # for name, param in self.encoder.named_parameters():
-                #     print(f"{name}: {param.shape}")
 
                 print(f"Loaded with {len(missing)} missing keys and {len(unexpected)} unexpected keys")
                 print("Missing keys:")
