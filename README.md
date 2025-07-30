@@ -2,7 +2,8 @@
 
 This repository hosts the code for reconstructing an image using varied number of learnable latent tokens (eg. 16, 32, 64, 128, 256) using uninitialized and initialized models (eg. MAE, CLIP, DINO, DINO-v2 and Depth-Anything v2). 
 
-![Reconstructions](images/token_reconstructions.png)
+<img src="images/reconstructions.png" width="200"/>
+<img src="images/token_reconstructions.png" width="200"/>
 
 ## Contributions 
 
