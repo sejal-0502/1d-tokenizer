@@ -2,6 +2,8 @@
 
 This repository hosts the code for reconstructing an image using varied number of learnable latent tokens (eg. 16, 32, 64, 128, 256) using uninitialized and initialized models (eg. MAE, CLIP, DINO, DINO-v2 and Depth-Anything v2). 
 
+![Reconstructions](images/token_reconstructions.png)
+
 ## Contributions 
 
 We use the concept of 1D image tokenization for reconstructing the images using fixed number of learnable latent tokens. We train our model on BDD100K driving subdataset, with the image resolution of 256 x 256. Further, we utilize these output tokens from our 1d-tokenizer for image generation.
