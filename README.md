@@ -4,12 +4,12 @@ This repository hosts the code for reconstructing an image using varied number o
 
 <table>
   <tr>
-    <td align="center"><img src="images/reconstructions.png" width="300"/></td>
+    <td align="center"><img src="images/reconstructions.png" width="400"/></td>
     <td align="center"><img src="images/token_reconstructions.png" width="400"/></td>
   </tr>
   <tr>
     <td align="center">Figure 1 : Image Reconstructions using 64 tokens and different models</td>
-    <td align="center">Figuare 2 : Image Reconstructions usinf 1d-tokenizer. Greater the number of latent tokens used for reconstruction, higher is the quality of reconstructed image (equivalent to Baseline)</td>
+    <td align="center">Figuare 2 : Image Reconstructions using 1d-tokenizer - MAE model. Greater the number of latent tokens used for reconstruction, higher is the quality of reconstructed image (equivalent to Baseline)</td>
   </tr>
 </table>
 
@@ -17,11 +17,11 @@ This repository hosts the code for reconstructing an image using varied number o
 
 We use the concept of 1D image tokenization for reconstructing the images using fixed number of learnable latent tokens. We train our model on BDD100K driving subdataset, with the image resolution of 256 x 256. Further, we utilize these output tokens from our 1d-tokenizer for image generation.
 
-We further conduct various experiments with varies model initializations and number of latent tokens, compare the performances and claim 64 tokens to be a descent number for reconstruction of an image.
+We further conduct various experiments with varied model initializations and number of latent tokens, compare the performances and claim 64 tokens to be a descent number for reconstruction of an image.
 
 ## Checkpoints
 
-Checkpoints for the model trained using 64 tokens. Checkpoints for the same in 'checkpoints/Tokenizer_with_initialization'.
+rFID Scores for the model trained using 64 tokens. Checkpoints for the same in 'checkpoints/Tokenizer_with_initialization'.
 
 | Model                 |  rFID ↓   | 
 |-----------------------|------------
@@ -33,13 +33,12 @@ Checkpoints for the model trained using 64 tokens. Checkpoints for the same in '
 | Uninitialized Model   |   111.89  |
 | Big Dataset - MAE     |   33.19   |
 
-![Model Performance](images/rFIDs.png)
 <table>
   <tr>
-    <td align="center"><img src="images/rFIDs.png" width="500"/></td>
+    <td align="center"><img src="images/rFIDs.png" width="600"/></td>
   </tr>
   <tr>
-    <td align="center">Figure 3 : Image Reconstructions using 1d-tokenizer. The plot shows the performance of varied models using different number of latent tokens</td>
+    <td align="center">Figure 3 : Image Reconstruction using 1d-tokenizer. The plot shows the performance of varied models using different number of latent tokens</td>
   </tr>
 </table>
 
