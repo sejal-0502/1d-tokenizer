@@ -2,8 +2,16 @@
 
 This repository hosts the code for reconstructing an image using varied number of learnable latent tokens (eg. 16, 32, 64, 128, 256) using uninitialized and initialized models (eg. MAE, CLIP, DINO, DINO-v2 and Depth-Anything v2). 
 
-<img src="images/reconstructions.png" width="200"/>
-<img src="images/token_reconstructions.png" width="200"/>
+<table>
+  <tr>
+    <td align="center"><img src="images/reconstructions.png" width="300"/></td>
+    <td align="center"><img src="images/token_reconstructions.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td align="center">Figure 1 : Image Reconstructions using 64 tokens and different models</td>
+    <td align="center">Figuare 2 : Image Reconstructions usinf 1d-tokenizer. Greater the number of latent tokens used for reconstruction, higher is the quality of reconstructed image (equivalent to Baseline)</td>
+  </tr>
+</table>
 
 ## Contributions 
 
@@ -26,6 +34,14 @@ Checkpoints for the model trained using 64 tokens. Checkpoints for the same in '
 | Big Dataset - MAE     |   33.19   |
 
 ![Model Performance](images/rFIDs.png)
+<table>
+  <tr>
+    <td align="center"><img src="images/rFIDs.png" width="500"/></td>
+  </tr>
+  <tr>
+    <td align="center">Figure 3 : Image Reconstructions using 1d-tokenizer. The plot shows the performance of varied models using different number of latent tokens</td>
+  </tr>
+</table>
 
 ## Requirements
 A suitable python environment (For eg. `mamba`) named `tokenization` can be created and activated with:
