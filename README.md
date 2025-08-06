@@ -35,7 +35,7 @@ rFID Scores for the model trained using 64 tokens. Checkpoints for the same in '
 
 <table>
   <tr>
-    <td align="center"><img src="" width="600"/></td>
+    <td align="center"><img src="images/rFIDs.png" width="600"/></td>
   </tr>
   <tr>
     <td align="center">Figure 3 : Image Reconstruction using 1d-tokenizer. The plot shows the performance of varied models using different number of latent tokens</td>
