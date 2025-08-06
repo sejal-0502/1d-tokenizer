@@ -70,3 +70,7 @@ srun python -m torch.distributed.launch --nproc_per_node=2 \
 ```
 python tools/compute_codebook_usage.py --config_path /work/dlclarge2/mutakeks-titok/mae_16/config.yaml --ckpt_path /work/dlclarge2/mutakeks-titok/mae_16/checkpoints/last.ckpt --compute_rFID_score
 ```
+
+## Image Generation
+
+[MaskGIT](https://github.com/sejal-0502/Maskgit.git)
